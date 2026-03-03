@@ -419,10 +419,13 @@ router.post('/orders/create', validate, async (req, res) => {
     await sendTrackingEmail(trackingData);
     logger.info(\`✅ Fluxo completo | \${trackingData.tracking_code}\`);
   } catch (err) {
-    logger.error(\`❌ Erro pedido \${orderId}:\`, err.message);
-    await sendErrorAlert(err, \`Pedido \${orderId} — \${storeDomain}\`);
-    processed.delete(orderId);
-  }
+  logger.error(`❌ ERRO COMPLETO pedido ${orderId}:`);
+  logger.error(err); // mostra erro completo
+
+  await sendErrorAlert(err, `Pedido ${orderId} — ${storeDomain}`);
+
+  processed.delete(orderId);
+}
 });
 
 router.post('/orders/cancelled', validate, async (req, res) => {
