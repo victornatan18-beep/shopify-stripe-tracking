@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TrackCode — Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#070710;--s1:#0e0e1a;--s2:#13131f;--border:#1e1e30;--accent:#00e5a0;--accent2:#7c6cff;--accent3:#ff6c6c;--text:#e2e2f0;--muted:#5a5a7a}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:'Syne',sans-serif;min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;z-index:0;background-image:linear-gradient(rgba(0,229,160,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,229,160,.03) 1px,transparent 1px);background-size:40px 40px;pointer-events:none}
+#login{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;background:var(--bg)}
+.login-box{background:var(--s1);border:1px solid var(--border);border-radius:20px;padding:48px;width:380px;text-align:center;box-shadow:0 0 60px rgba(124,108,255,.1)}
+.login-box h1{font-size:28px;font-weight:800;margin-bottom:8px}.login-box h1 span{color:var(--accent)}
+.login-box p{color:var(--muted);font-size:14px;margin-bottom:32px}
+.login-box input{width:100%;background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;color:var(--text);font-family:'Space Mono',monospace;font-size:14px;outline:none;margin-bottom:16px;transition:.2s}
+.login-box input:focus{border-color:var(--accent)}
+.login-box button{width:100%;background:var(--accent);color:#070710;border:none;border-radius:10px;padding:14px;font-family:'Syne',sans-serif;font-size:16px;font-weight:700;cursor:pointer;transition:.2s}
+.login-box button:hover{filter:brightness(1.1);transform:translateY(-1px)}
+#login-err{color:var(--accent3);font-size:13px;margin-top:12px;display:none}
+#app{display:none;position:relative;z-index:1}
+.sidebar{position:fixed;left:0;top:0;bottom:0;width:220px;background:var(--s1);border-right:1px solid var(--border);padding:28px 20px;display:flex;flex-direction:column;gap:8px}
+.logo{font-size:20px;font-weight:800;color:var(--accent);letter-spacing:2px;margin-bottom:28px}.logo span{color:var(--muted)}
+.nav-item{padding:11px 14px;border-radius:10px;cursor:pointer;font-size:14px;font-weight:600;color:var(--muted);transition:.15s;display:flex;align-items:center;gap:10px}
+.nav-item:hover{background:var(--s2);color:var(--text)}
+.nav-item.active{background:rgba(0,229,160,.1);color:var(--accent);border:1px solid rgba(0,229,160,.2)}
+.main{margin-left:220px;padding:32px;min-height:100vh}
+.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:32px}
+.topbar h2{font-size:26px;font-weight:800}.topbar h2 span{color:var(--accent)}
+.status-dot{width:8px;height:8px;background:var(--accent);border-radius:50%;display:inline-block;margin-right:6px;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:28px}
+.stat-card{background:var(--s1);border:1px solid var(--border);border-radius:16px;padding:24px;position:relative;overflow:hidden;transition:.2s}
+.stat-card:hover{border-color:var(--accent);transform:translateY(-2px)}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--accent),var(--accent2))}
+.stat-label{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px}
+.stat-value{font-size:36px;font-weight:800;font-family:'Space Mono',monospace}
+.stat-icon{position:absolute;right:20px;top:50%;transform:translateY(-50%);font-size:40px;opacity:.08}
+.panel{background:var(--s1);border:1px solid var(--border);border-radius:16px;overflow:hidden;margin-bottom:24px}
+.panel-header{padding:20px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.panel-header h3{font-size:16px;font-weight:700}
+.search-bar{background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:8px 14px;color:var(--text);font-family:'Space Mono',monospace;font-size:13px;outline:none;width:260px;transition:.2s}
+.search-bar:focus{border-color:var(--accent)}
+table{width:100%;border-collapse:collapse}
+th{padding:12px 20px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);border-bottom:1px solid var(--border)}
+td{padding:14px 20px;font-size:13px;border-bottom:1px solid rgba(30,30,48,.5)}
+tr:last-child td{border-bottom:none}tr:hover td{background:rgba(255,255,255,.02)}
+.code-badge{font-family:'Space Mono',monospace;font-size:12px;font-weight:700;color:var(--accent);background:rgba(0,229,160,.08);border:1px solid rgba(0,229,160,.2);padding:4px 10px;border-radius:6px;display:inline-block}
+.status-badge{font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;text-transform:uppercase;letter-spacing:.5px;display:inline-block}
+.s-created{background:rgba(124,108,255,.15);color:var(--accent2);border:1px solid rgba(124,108,255,.3)}
+.s-in_transit{background:rgba(255,200,0,.1);color:#ffc800;border:1px solid rgba(255,200,0,.3)}
+.s-delivered{background:rgba(0,229,160,.1);color:var(--accent);border:1px solid rgba(0,229,160,.3)}
+.s-cancelled{background:rgba(255,108,108,.1);color:var(--accent3);border:1px solid rgba(255,108,108,.3)}
+.bottom-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.country-bar{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)}
+.country-bar:last-child{border-bottom:none}
+.country-name{width:40px;font-family:'Space Mono',monospace;font-size:12px;color:var(--muted)}
+.bar-track{flex:1;background:var(--s2);border-radius:4px;height:6px;overflow:hidden}
+.bar-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:4px;transition:width 1s ease}
+.bar-count{font-size:12px;color:var(--text);font-family:'Space Mono',monospace;width:30px;text-align:right}
+.loader{text-align:center;padding:48px;color:var(--muted)}
+.spinner{width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 16px}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+.fade-up{animation:fadeUp .4s ease forwards}
+</style>
+</head>
+<body>
+<div id="login">
+  <div class="login-box">
+    <h1>Track<span>Code</span></h1>
+    <p>Sistema de Rastreio Inteligente</p>
+    <input type="password" id="secret-input" placeholder="Chave de acesso"/>
+    <button onclick="doLogin()">Entrar →</button>
+    <div id="login-err">Chave inválida.</div>
+  </div>
+</div>
+<div id="app">
+  <div class="sidebar">
+    <div class="logo">Track<span>Code</span></div>
+    <div class="nav-item active" onclick="showTab('overview')"><span>⬡</span> Visão Geral</div>
+    <div class="nav-item" onclick="showTab('trackings')"><span>◈</span> Rastreios</div>
+    <div class="nav-item" onclick="showTab('countries')"><span>◎</span> Países</div>
+  </div>
+  <div class="main">
+    <div class="topbar">
+      <h2>Painel de <span>Rastreio</span></h2>
+      <div style="font-size:13px;color:var(--muted)"><span class="status-dot"></span>Sistema ativo &nbsp;|&nbsp; <span id="clock" style="font-family:'Space Mono',monospace"></span></div>
+    </div>
+    <div id="tab-overview">
+      <div class="stats-grid">
+        <div class="stat-card fade-up"><div class="stat-icon">📦</div><div class="stat-label">Total</div><div class="stat-value" id="s-total">—</div></div>
+        <div class="stat-card fade-up" style="animation-delay:.1s"><div class="stat-icon">✅</div><div class="stat-label">Entregues</div><div class="stat-value" id="s-delivered">—</div></div>
+        <div class="stat-card fade-up" style="animation-delay:.2s"><div class="stat-icon">🚚</div><div class="stat-label">Em Trânsito</div><div class="stat-value" id="s-transit">—</div></div>
+        <div class="stat-card fade-up" style="animation-delay:.3s"><div class="stat-icon">❌</div><div class="stat-label">Cancelados</div><div class="stat-value" id="s-cancelled">—</div></div>
+      </div>
+      <div class="panel fade-up" style="animation-delay:.4s">
+        <div class="panel-header"><h3>Últimos Rastreios</h3></div>
+        <div id="recent-table"><div class="loader"><div class="spinner"></div>Carregando...</div></div>
+      </div>
+    </div>
+    <div id="tab-trackings" style="display:none">
+      <div class="panel">
+        <div class="panel-header"><h3>Todos os Rastreios</h3><input class="search-bar" id="search-input" placeholder="Buscar..." oninput="debounceSearch()"/></div>
+        <div id="all-table"><div class="loader"><div class="spinner"></div>Carregando...</div></div>
+      </div>
+    </div>
+    <div id="tab-countries" style="display:none">
+      <div class="bottom-grid">
+        <div class="panel"><div class="panel-header"><h3>Top Países</h3></div><div id="country-bars" style="padding:16px 24px"><div class="loader"><div class="spinner"></div></div></div></div>
+        <div class="panel"><div class="panel-header"><h3>Por Status</h3></div><div id="status-bars" style="padding:16px 24px"><div class="loader"><div class="spinner"></div></div></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+let SECRET='';
+setInterval(()=>{document.getElementById('clock').textContent=new Date().toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'medium'})},1000);
+function doLogin(){
+  SECRET=document.getElementById('secret-input').value.trim();
+  fetchStats().then(()=>{document.getElementById('login').style.display='none';document.getElementById('app').style.display='block';loadOverview();}).catch(()=>{document.getElementById('login-err').style.display='block';});
+}
+document.getElementById('secret-input').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+async function api(p){const r=await fetch(p,{headers:{'x-dashboard-secret':SECRET}});if(!r.ok)throw new Error(r.status);return r.json();}
+function showTab(n){['overview','trackings','countries'].forEach(t=>{document.getElementById('tab-'+t).style.display=t===n?'':'none';});document.querySelectorAll('.nav-item').forEach((el,i)=>{el.classList.toggle('active',['overview','trackings','countries'][i]===n);});if(n==='trackings')loadAll();if(n==='countries')loadCountries();}
+async function fetchStats(){const d=await api('/api/stats');document.getElementById('s-total').textContent=d.total||0;const m={};d.byStatus.forEach(s=>m[s._id]=s.count);document.getElementById('s-delivered').textContent=m.delivered||0;document.getElementById('s-transit').textContent=m.in_transit||0;document.getElementById('s-cancelled').textContent=m.cancelled||0;return d;}
+async function loadOverview(){fetchStats();const d=await api('/api/trackings?limit=8');document.getElementById('recent-table').innerHTML=buildTable(d.data);}
+async function loadAll(q=''){const s=q?'&search='+encodeURIComponent(q):'';const d=await api('/api/trackings?limit=50'+s);document.getElementById('all-table').innerHTML=buildTable(d.data);}
+let st;function debounceSearch(){clearTimeout(st);st=setTimeout(()=>loadAll(document.getElementById('search-input').value),400);}
+function sl(s){return{created:'Criado',in_transit:'Em Trânsito',out_for_delivery:'Saiu p/ Entrega',delivered:'Entregue',cancelled:'Cancelado'}[s]||s;}
+function buildTable(rows){if(!rows.length)return '<div class="loader">Nenhum rastreio encontrado.</div>';return '<table><thead><tr><th>Código</th><th>Pedido</th><th>Cliente</th><th>País</th><th>Entrega Est.</th><th>Status</th></tr></thead><tbody>'+rows.map(r=>'<tr><td><span class="code-badge">'+r.tracking_code+'</span></td><td style="font-family:monospace;font-size:12px">'+(r.shopify_order_number||'—')+'</td><td><div>'+((r.customer&&r.customer.name)||'—')+'</div><div style="font-size:11px;color:var(--muted)">'+(r.customer&&r.customer.email||'')+'</div></td><td>'+r.country_code+' — '+(r.country_name||'')+'</td><td style="font-family:monospace;font-size:12px">'+(r.estimated_delivery_formatted||'—')+'</td><td><span class="status-badge s-'+r.status+'">'+sl(r.status)+'</span></td></tr>').join('')+'</tbody></table>';}
+async function loadCountries(){const d=await api('/api/stats');const mx=Math.max(...d.byCountry.map(c=>c.count),1);document.getElementById('country-bars').innerHTML=d.byCountry.map(c=>'<div class="country-bar"><div class="country-name">'+c._id+'</div><div class="bar-track"><div class="bar-fill" style="width:'+(c.count/mx*100).toFixed(1)+'%"></div></div><div class="bar-count">'+c.count+'</div></div>').join('')||'<div style="color:var(--muted)">Sem dados.</div>';const sc={created:'var(--accent2)',in_transit:'#ffc800',delivered:'var(--accent)',cancelled:'var(--accent3)'};const ms=Math.max(...d.byStatus.map(s=>s.count),1);document.getElementById('status-bars').innerHTML=d.byStatus.map(s=>'<div class="country-bar"><div class="country-name" style="width:90px;font-family:Syne,sans-serif;font-size:12px;color:var(--text)">'+sl(s._id)+'</div><div class="bar-track"><div class="bar-fill" style="width:'+(s.count/ms*100).toFixed(1)+'%;background:'+(sc[s._id]||'var(--accent)')+'"></div></div><div class="bar-count">'+s.count+'</div></div>').join('')||'<div style="color:var(--muted)">Sem dados.</div>';}
+</script>
+</body>
+</html>
